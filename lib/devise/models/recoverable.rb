@@ -69,11 +69,18 @@ module Devise
 
         # Attempt to find a user by it's reset_password_token to reset it's
         # password. If a user is found, reset it's password and automatically
-        # try saving the record. If not user is found, returns a new user
-        # containing an error in reset_password_token attribute.
+        # try saving the record. It also confirms the user email.
+        # If not user is found, returns a new user containing an error in
+        # reset_password_token attribute.
         # Attributes must contain reset_password_token, password and confirmation
         def reset_password_by_token(attributes={})
           recoverable = find_or_initialize_with_error_by(:reset_password_token, attributes[:reset_password_token])
+
+          # If user finds token then validates email
+          recoverable.confirm! if recoverable.respond_to?(:confirm!) &&
+                                  recoverable.persisted? &&
+                                  !recoverable.confirmed?
+
           recoverable.reset_password!(attributes[:password], attributes[:password_confirmation]) if recoverable.persisted?
           recoverable
         end
